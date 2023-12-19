@@ -58,93 +58,65 @@ def do_wick(string):
     res = []
     # Iteration over the order (order <=> number of deltas) for i
     for order_i in res_i:
-        #print('order i',order_i)
         # Iteration over the list of product of deltas i of a given order
         for list_delta_i in order_i:
-            #print('list delta i',list_delta_i)
-            #for delta_i in list_delta_i:
-            #    print('delta i',delta_i)
             # As for i
             for order_a in res_a:
-                #print('order a)',order_a)
                 # As for i
                 for list_delta_a in order_a:
-                    #print('list_delta i ',list_delta_i)
-                    #print('list_delta a ',list_delta_a)
                     # If there is at least one term for a
                     if len(list_delta_a) > 0:
                         # the different deltas a are append after the i ones
                         tmp = copy.deepcopy(list_delta_i)
                         for delta_a in list_delta_a:
                             tmp.append(delta_a)
-                            #print('tmp',tmp)
                         res.append(tmp)
                     # If there is no a delta, we just keep the i ones
                     else:
                         tmp = copy.deepcopy(list_delta_i)
-                        #print('tmp',tmp)
                         res.append(tmp)
-                    #print('Final:',tmp)
-
-    #print('res')
-    #for list_deltas in res:
-    #    print(list_deltas)
 
     # Ordering of the terms by increasing number of deltas
     max_len = 0
     for elem in res:
         if len(elem) > max_len:
             max_len = len(elem)
-    #print('max len',max_len)
 
     # Reordering of the list of deltas depending on the number of deltas
     tmp_ordered = [[] for i in range(max_len+1)]
     for elem in res:
         tmp_ordered[len(elem)].append(elem)
-    #print('tmp_ordered:',tmp_ordered)
     
     # Finally the right order
     list_deltas = []
     for l_deltas in tmp_ordered:
         for elem in l_deltas:
             list_deltas.append(elem)
-    #print('Deltas:')
-    #for delta in list_deltas:
-    #    print(delta)
     
     list_signs = []
     for elem in list_deltas:
         list_signs.append(extract_sign(elem,string))
-    #print('Signs:',list_signs)
 
     # copy of the initial string
     list_str = [string for i in range(len(list_signs))]
-    #print(list_str)
 
     # Removing the op of the string implied in a contraction
     acc = []
     for s,d in zip(list_str,list_deltas):
         tmp = []
-        #print(s,d)
         for elem in s:
             is_contracted = False
-            #print(elem)
             for delta in d:
                 for op in delta:
                     if op == elem:
                         is_contracted = True
                         break
-                #print('c',elem,delta)
             if (not is_contracted):
                 tmp.append(elem)
-        #print('Res',tmp)
 
         acc.append(tmp)
-    #print(acc)
+        
     list_str = acc
-    #print('Strings:')
-    #for s in list_str:
-    #    print(s)
 
     if debug:
         for sign,d,s in zip(list_signs,list_deltas,list_str):
@@ -159,12 +131,8 @@ def do_wick(string):
 def combine_one_class_delta(delta_i,i_op,string):
     
     order_delta_i = []
-    #order_delta_i.append([[(0,0)]])
-    #print('order delta i: 0',order_delta_i)
     if len(delta_i) == 0:
-        #print('Nb of delta = 0!!!')
         return order_delta_i
-        #sys.exit()
         
     acc = []
     if len(delta_i) != 0:
@@ -174,63 +142,45 @@ def combine_one_class_delta(delta_i,i_op,string):
         acc.append([(0,0)])
     order_delta_i.append(acc)
    
-    #print('order delta i: 1',order_delta_i[0])
-
     for i in range(1,len(i_op)//2+1):
         # List of term
         acc1 = []
         # a term = 1 or many delta that are multiplied
         list_term = order_delta_i[i-1]
-        #print('List term:',list_term)
         # list of delta of each term, 1 or many delta that are multiplied
         acc2 = []
         for list_delta in list_term:
-            #print('List delta:',list_delta)
             list_op = []
             # a single delta
             for delta in list_delta:
-               #print('delta:',delta)
                # the op that are contracted with the delta
                for op in delta:
                    list_op.append(op)
-            #print('list op:',list_op)
+                   
             # add delta, one on the existing delta and we look if we can do the contraction in
             # addition do the contractions already done
-            
             for add_delta in delta_i:
                 acc3 = copy.deepcopy(list_delta)
                 idx_last = find_idx_elem(acc3[-1] ,delta_i)
                 idx_add  = find_idx_elem(add_delta,delta_i)
                 if idx_add <= idx_last:
                     continue
-                #print('add delta',add_delta,'delta', delta)
-                #print('list_op',list_op)
                 is_in = False
                 # check if the operator in the delta we want to add is already in another contraction
                 for op1 in add_delta:
                     for op2 in list_op:
                         if op1 == op2:
                             is_in = True
-                            #print(op1,op2,is_in)
                     if is_in: continue
                 if is_in: continue
                 
-                #print('no conflict for',add_delta,'with',list_delta)
                 acc3.append(add_delta)
                 acc2.append(acc3)
                 
         #if there is no i-multiple delta        
         if len(acc2) == 0:
             break
-        #    acc3 = []
-        #    for j in range(i):
-        #        acc3.append((0,0))
-        #    acc2.append(acc3)
-        #print('acc3',acc3)
-        #print('New:',acc2)
         order_delta_i.append(acc2)
-        #print('order delta i:',i+1,order_delta_i[i])
-        #sys.exit()
 
     # sign
     #for list_term in order_delta_i:
@@ -245,13 +195,11 @@ def extract_sign(list_delta,string):
     # position of the op in the different deltas
     list_pos = []
     for delta in list_delta:
-        #print(delta, delta[0])
         tmp = []
         for op in delta:
             pos = find_idx_elem(op,string)
             tmp.append(pos)
         list_pos.append((tmp[0],tmp[1]))
-    #print('List pos:', list_pos)
 
     # Number of crossing lines in the contractions
     nb_cross = 0
@@ -262,11 +210,8 @@ def extract_sign(list_delta,string):
             pi_k = list_pos[k][0]
             pf_k = list_pos[k][1]
             # Crossing : ...pi_j ... pi_k ... pf_j ... pf_k...
-            #print(pi_j,pf_j,pi_k,pf_k,pf_k > pf_j,pi_k < pf_j)
             if (pf_k > pf_j) and (pi_k < pf_j) and (pi_k > pi_j) :
                 nb_cross = nb_cross + 1
-                #print(nb_cross)
-    #print('Nb crossing:',nb_cross)
 
     # Number of permutation required to do the contraction
     nb_perm = 0
@@ -274,11 +219,9 @@ def extract_sign(list_delta,string):
         pi = pos[0]
         pf = pos[1]
         nb_perm = nb_perm + pf-pi-1
-    #print('Nb permutation:',nb_perm)
 
     # Final sign
     sign = (-1)**nb_cross * (-1)**nb_perm
-    #print('Sign:',sign)
     
     return sign
 
@@ -382,7 +325,6 @@ def put_crea_to_left(sign,string):
     acc_pos = []
     tmp = []
     idx = 2
-    #print(string)
     string_pos = [i for i in range(len(string))]
     for elem,pos in zip(string,string_pos):
         if elem[idx] == '+':
@@ -400,7 +342,7 @@ def put_crea_to_left(sign,string):
     
     for elem in tmp:
         acc.append(elem)
-    #print(acc)
+        
     return sign, acc
 
 class Wicked_str():
@@ -431,9 +373,6 @@ class Wicked_str():
             tex = tex + '\\right\\}_N'
         return tex
         
-        #print('Latex:')
-        #display(Latex(f'${tex}$'))
-        #print(tex)
     def crea_to_left(self):
         self.sign, self.ops = put_crea_to_left(self.sign,self.ops)
         self.tex = self.to_latex()
@@ -448,9 +387,7 @@ def deltas_to_tex(deltas):
     tex = ''
     for delta in deltas:
         d1 = str(delta[0][1])+ '_{$'+ delta[0][3] + '}'
-        #d1 = latexify(delta[0])
         d2 = str(delta[1][1])+ '_{$'+ delta[1][3] + '}'
-        #d2 = latexify(delta[1])
         tex = tex + '\delta('+d1+','+d2+') \ '
         tex = tex.replace('$a','\\alpha')
         tex = tex.replace('$b','\\beta')
