@@ -165,7 +165,7 @@ def do_wick(string):
 ** Combine deltas from one class
 #+begin_src python :results output :session wick :tangle wick.py
 # The idea is to build the string by starting from the list of delta
-# From this list we can build a list of pairs of delta that do not share the same idx
+# From this list we can build a list of pairs of deltas that do not share the same idx
 # From this list of pairs of delta we can built a list of triplet of delta
 # and so on ...
 def combine_one_class_delta(delta_i,i_op,string):
@@ -414,11 +414,12 @@ def find_idx_elem(elem,list_elem):
 ** Reorder
 #+begin_src python :results output :session wick :tangle wick.py
 # To put creation operator on the right
-def put_crea_to_right(sign,string):
+def put_crea_to_left(sign,string):
     acc = []
     acc_pos = []
     tmp = []
     idx = 2
+    #print(string)
     string_pos = [i for i in range(len(string))]
     for elem,pos in zip(string,string_pos):
         if elem[idx] == '+':
@@ -436,7 +437,7 @@ def put_crea_to_right(sign,string):
     
     for elem in tmp:
         acc.append(elem)
-
+    #print(acc)
     return sign, acc
     
 #+end_src
@@ -457,7 +458,7 @@ class Wicked_str():
         deltas = self.deltas
         ops = self.ops
         if sign > 0:
-            tex = ''
+            tex = '+ '
         else:
             tex = '- '
 
@@ -476,8 +477,8 @@ class Wicked_str():
         #print('Latex:')
         #display(Latex(f'${tex}$'))
         #print(tex)
-    def ordered(self):
-        self.sign, self.ops = put_crea_to_right(self.sign,self.ops)
+    def crea_to_left(self):
+        self.sign, self.ops = put_crea_to_left(self.sign,self.ops)
         self.tex = self.to_latex()
 
     def tex_show(self):
@@ -515,221 +516,35 @@ def latexify(op):
 
 * Main
 #+begin_src python :results output :session wick :tangle wick.py    
-# 1: orb class: i = hole, p = particle
-# 2: idx
-# 3: op type: + = crea, - = anni
-# 4: spin: a = alpha, b = beta, g = general
+# 1: orbital class, i for occupied, a for unoccupied (for Fermi vacuum).
+# For the true vacuum, use a.
+# 2: orbital label
+# 3: operator type, + for creation, - for annihilation
+# 4: spin, a for $\alpha$, b for $\beta$, g for general (could be $\alpha$ or $\beta$)
 # 5: optional, to avoid contraction between some operators
+# (two operators with the same 5th index cannot be contracted together).
+
 if __name__ == "__main__":
-    s = ['ip+g','aq-g','ir+g','is-g','at+g','iu-g']
+    s = ['ip+g','aq-g','ir-g','is+g','at+g','iu-g']
     #s = ['ix+g','iy+g','aw-g','av-g','iq+g','ip-g']
 
+    #From this, we can call the function "do_wick" on s to apply
+    # Wick's theorem and generate 3 lists, one for the signs, one
+    # for the kronecker delta and one for the normal ordered string
+    # containing the remaining uncontracted operators (WARNING:
+    # the operators are not put in normal order in these strings,
+    # but you can reorder them since it will only change the sign.
+    # That's why we write them as $\{...\}_N$).
     list_sign, list_deltas, list_string = do_wick(s)
 
     for sign,deltas,string in zip(list_sign, list_deltas, list_string):
+        # Creates an object Wicked_str to print or display latex code 
         obj = Wicked_str(sign,deltas,string)
+        # to print the each element of the result with latex format
+        obj.tex_show()
+        # to show the latex equation in a Jupyter Notebook
+        #obj.eq_show()
 #+end_src
 
 #+RESULTS:
-#+begin_example
-res_i (possible products of i deltas): [[[]], [[('ip+g', 'is-g')], [('ip+g', 'iu-g')], [('ir+g', 'is-g')], [('ir+g', 'iu-g')]], [[('ip+g', 'is-g'), ('ir+g', 'iu-g')], [('ip+g', 'iu-g'), ('ir+g', 'is-g')]]]
-res_a (possible products of a deltas): [[[]], [[('aq-g', 'at+g')]]]
-Strings: [['ip+g', 'aq-g', 'ir+g', 'is-g', 'at+g', 'iu-g'], ['ip+g', 'ir+g', 'is-g', 'iu-g'], ['aq-g', 'ir+g', 'at+g', 'iu-g'], ['aq-g', 'ir+g', 'is-g', 'at+g'], ['ip+g', 'aq-g', 'at+g', 'iu-g'], ['ip+g', 'aq-g', 'is-g', 'at+g'], ['ir+g', 'iu-g'], ['ir+g', 'is-g'], ['ip+g', 'iu-g'], ['ip+g', 'is-g'], ['aq-g', 'at+g'], ['aq-g', 'at+g'], [], []]
-1 [] ['ip+g', 'aq-g', 'ir+g', 'is-g', 'at+g', 'iu-g']
-1 [('aq-g', 'at+g')] ['ip+g', 'ir+g', 'is-g', 'iu-g']
-1 [('ip+g', 'is-g')] ['aq-g', 'ir+g', 'at+g', 'iu-g']
-1 [('ip+g', 'iu-g')] ['aq-g', 'ir+g', 'is-g', 'at+g']
-1 [('ir+g', 'is-g')] ['ip+g', 'aq-g', 'at+g', 'iu-g']
-1 [('ir+g', 'iu-g')] ['ip+g', 'aq-g', 'is-g', 'at+g']
--1 [('ip+g', 'is-g'), ('aq-g', 'at+g')] ['ir+g', 'iu-g']
-1 [('ip+g', 'iu-g'), ('aq-g', 'at+g')] ['ir+g', 'is-g']
-1 [('ir+g', 'is-g'), ('aq-g', 'at+g')] ['ip+g', 'iu-g']
-1 [('ir+g', 'iu-g'), ('aq-g', 'at+g')] ['ip+g', 'is-g']
--1 [('ip+g', 'is-g'), ('ir+g', 'iu-g')] ['aq-g', 'at+g']
-1 [('ip+g', 'iu-g'), ('ir+g', 'is-g')] ['aq-g', 'at+g']
-1 [('ip+g', 'is-g'), ('ir+g', 'iu-g'), ('aq-g', 'at+g')] []
-1 [('ip+g', 'iu-g'), ('ir+g', 'is-g'), ('aq-g', 'at+g')] []
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-i^{\dagger}_{p_{g}}a^{}_{q_{g}}i^{\dagger}_{r_{g}}i^{}_{s_{g}}a^{\dagger}_{t_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) i^{\dagger}_{p_{g}}i^{\dagger}_{r_{g}}i^{}_{s_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{s_{g}}) a^{}_{q_{g}}i^{\dagger}_{r_{g}}a^{\dagger}_{t_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{u_{g}}) a^{}_{q_{g}}i^{\dagger}_{r_{g}}i^{}_{s_{g}}a^{\dagger}_{t_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{r_{g}},i^{}_{s_{g}}) i^{\dagger}_{p_{g}}a^{}_{q_{g}}a^{\dagger}_{t_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{r_{g}},i^{}_{u_{g}}) i^{\dagger}_{p_{g}}a^{}_{q_{g}}i^{}_{s_{g}}a^{\dagger}_{t_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
--\delta(i^{\dagger}_{p_{g}},i^{}_{s_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) i^{\dagger}_{r_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{u_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) i^{\dagger}_{r_{g}}i^{}_{s_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{r_{g}},i^{}_{s_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) i^{\dagger}_{p_{g}}i^{}_{u_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{r_{g}},i^{}_{u_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) i^{\dagger}_{p_{g}}i^{}_{s_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
--\delta(i^{\dagger}_{p_{g}},i^{}_{s_{g}}) \delta(i^{\dagger}_{r_{g}},i^{}_{u_{g}}) a^{}_{q_{g}}a^{\dagger}_{t_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{u_{g}}) \delta(i^{\dagger}_{r_{g}},i^{}_{s_{g}}) a^{}_{q_{g}}a^{\dagger}_{t_{g}}
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{s_{g}}) \delta(i^{\dagger}_{r_{g}},i^{}_{u_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}}) 
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-display
-<IPython.core.display.Latex object>
-\delta(i^{\dagger}_{p_{g}},i^{}_{u_{g}}) \delta(i^{\dagger}_{r_{g}},i^{}_{s_{g}}) \delta(a^{}_{q_{g}},a^{\dagger}_{t_{g}})
-#+end_example
 

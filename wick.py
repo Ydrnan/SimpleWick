@@ -13,7 +13,7 @@ def do_wick(string):
     idx_op  = 2
 
     pos = [i for i in range(len(string))]
-    # Extract op
+    # Extraction of the operators
     ## By class of orb
     ### i
     i_op, pos_i_op = extract_op(string,'i',idx_orb,pos)
@@ -45,21 +45,21 @@ def do_wick(string):
     if debug: print('Delta a:', delta_a)
     #sys.exit()
 
-    # Create all the product of hole deltas
+    # Creation of all the products of hole deltas
     res_i = combine_one_class_delta(delta_i,i_op,string)
     res_i.insert(0,[[]])
     if debug: print('res_i (possible products of i deltas):',res_i)
-    # Create all the product of particle deltas
+    # Creation of all the products of particle deltas
     res_a = combine_one_class_delta(delta_a,a_op,string)
     res_a.insert(0,[[]])
     if debug: print('res_a (possible products of a deltas):',res_a)
 
-    # Combine the product of kronecker deltas coming from different classes of orbitals
+    # Combination of the products of kronecker deltas coming from different classes of orbitals
     res = []
-    # Loop over the order (number of deltas) for i
+    # Iteration over the order (order <=> number of deltas) for i
     for order_i in res_i:
         #print('order i',order_i)
-        # Loop over the list of product of deltas i of a given order
+        # Iteration over the list of product of deltas i of a given order
         for list_delta_i in order_i:
             #print('list delta i',list_delta_i)
             #for delta_i in list_delta_i:
@@ -90,14 +90,14 @@ def do_wick(string):
     #for list_deltas in res:
     #    print(list_deltas)
 
-    # Order the terms by increasing number of deltas
+    # Ordering of the terms by increasing number of deltas
     max_len = 0
     for elem in res:
         if len(elem) > max_len:
             max_len = len(elem)
     #print('max len',max_len)
 
-    # Put the list of deltas depending on the number of deltas
+    # Reordering of the list of deltas depending on the number of deltas
     tmp_ordered = [[] for i in range(max_len+1)]
     for elem in res:
         tmp_ordered[len(elem)].append(elem)
@@ -117,7 +117,7 @@ def do_wick(string):
         list_signs.append(extract_sign(elem,string))
     #print('Signs:',list_signs)
 
-    #  copy the initial string
+    # copy of the initial string
     list_str = [string for i in range(len(list_signs))]
     #print(list_str)
 
@@ -152,9 +152,8 @@ def do_wick(string):
 
     return list_signs, list_deltas, list_str
 
-# Combine
-# The idea is to build the string by starting from the list on delta
-# From this list we can build a list of pairs of delta that do not share the same idx
+# The idea is to build the string by starting from the list of delta
+# From this list we can build a list of pairs of deltas that do not share the same idx
 # From this list of pairs of delta we can built a list of triplet of delta
 # and so on ...
 def combine_one_class_delta(delta_i,i_op,string):
@@ -241,7 +240,7 @@ def combine_one_class_delta(delta_i,i_op,string):
     return order_delta_i
 
 # Product of two lists
-# Compute the sign based on a list of delta and the original string of operators            
+# To compute the sign based on a list of delta and the original string of operators            
 def extract_sign(list_delta,string):
     # position of the op in the different deltas
     list_pos = []
@@ -361,7 +360,7 @@ def build_delta(list_op1,list_op2,list_pos1,list_pos2):
     
     return res
 
-# Search the index of an element in a list
+# To search the index of an element in a list
 def find_idx_elem(elem,list_elem):
     i = 0
     for d in list_elem:
@@ -377,11 +376,13 @@ def find_idx_elem(elem,list_elem):
 
     return i
 
-def put_crea_to_right(sign,string):
+# To put creation operator on the right
+def put_crea_to_left(sign,string):
     acc = []
     acc_pos = []
     tmp = []
     idx = 2
+    #print(string)
     string_pos = [i for i in range(len(string))]
     for elem,pos in zip(string,string_pos):
         if elem[idx] == '+':
@@ -399,7 +400,7 @@ def put_crea_to_right(sign,string):
     
     for elem in tmp:
         acc.append(elem)
-
+    #print(acc)
     return sign, acc
 
 class Wicked_str():
@@ -414,7 +415,7 @@ class Wicked_str():
         deltas = self.deltas
         ops = self.ops
         if sign > 0:
-            tex = ''
+            tex = '+ '
         else:
             tex = '- '
 
@@ -433,8 +434,8 @@ class Wicked_str():
         #print('Latex:')
         #display(Latex(f'${tex}$'))
         #print(tex)
-    def ordered(self):
-        self.sign, self.ops = put_crea_to_right(self.sign,self.ops)
+    def crea_to_left(self):
+        self.sign, self.ops = put_crea_to_left(self.sign,self.ops)
         self.tex = self.to_latex()
 
     def tex_show(self):
@@ -456,7 +457,6 @@ def deltas_to_tex(deltas):
         tex = tex.replace('$g','')
     return tex
     
-        
 def latexify(op):
     tex = op[0]+'^{'+op[2]+'}'+'_{'+op[1]+'_{$'+op[3]+'}'+'}'
     tex = tex.replace('+','\dagger')
@@ -467,15 +467,31 @@ def latexify(op):
 
     return tex
 
-# 1: orb class: i = hole, p = particle
-# 2: idx
-# 3: op type: + = crea, - = anni
-# 4: spin: a = alpha, b = beta, g = general
+# 1: orbital class, i for occupied, a for unoccupied (for Fermi vacuum).
+# For the true vacuum, use a.
+# 2: orbital label
+# 3: operator type, + for creation, - for annihilation
+# 4: spin, a for $\alpha$, b for $\beta$, g for general (could be $\alpha$ or $\beta$)
+# 5: optional, to avoid contraction between some operators
+# (two operators with the same 5th index cannot be contracted together).
+
 if __name__ == "__main__":
-    s = ['ip+g','aq-g','ir+g','is-g','at+g','iu-g']
+    s = ['ip+g','aq-g','ir-g','is+g','at+g','iu-g']
     #s = ['ix+g','iy+g','aw-g','av-g','iq+g','ip-g']
 
+    #From this, we can call the function "do_wick" on s to apply
+    # Wick's theorem and generate 3 lists, one for the signs, one
+    # for the kronecker delta and one for the normal ordered string
+    # containing the remaining uncontracted operators (WARNING:
+    # the operators are not put in normal order in these strings,
+    # but you can reorder them since it will only change the sign.
+    # That's why we write them as $\{...\}_N$).
     list_sign, list_deltas, list_string = do_wick(s)
 
     for sign,deltas,string in zip(list_sign, list_deltas, list_string):
+        # Creates an object Wicked_str to print or display latex code 
         obj = Wicked_str(sign,deltas,string)
+        # to print the each element of the result with latex format
+        obj.tex_show()
+        # to show the latex equation in a Jupyter Notebook
+        #obj.eq_show()
